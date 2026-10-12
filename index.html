@@ -3,6 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickTask Database Dashboard</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f5f5f7; padding: 40px; color: #1d1d1f; }
+        .card { background: white; max-width: 500px; margin: 0 auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1 { margin-top: 0; font-size: 24px; text-align: center; }
+        select, button { width: 100%; padding: 12px; margin: 8px 0; box-sizing: border-box; border-radius: 6px; border: 1px solid #d2d2d7; font-size: 16px; }
+        button.secondary { background: #34c759; color: white; border: none; font-weight: bold; cursor: pointer; margin-bottom: 15px; }
+        ul { list-style: none; padding: 0; }
+        li { background: #f5f5f7; padding: 12px; margin: 6px 0; border-radius: 6px; border-left: 4px solid #0071e3; }
+        .hint { font-size: 13px; color: #86868b; text-align: center; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>QuickTask Planner</h1>
+    <div class="hint">Demonstrating database persistence and external REST API fetching</div>
+
+    <!-- External Source Action Trigger -->
+    <button class="secondary" onclick="fetchExternalTask()">⚡ Fetch From External API Source</button>
+
+    <label for="energyFilter">Current Context Filter:</label>
+    <select id="energyFilter" onchange="fetchTasks()">
+        <option value="high">🔥 High Energy Tasks</option>
+        <option value="low">☕ Low Energy Tasks</option>
+    </select>
+
+    <ul id="taskList"></ul>
+</div>
+
+<script>
+    async function fetchTasks() {
+        const energy = document.getElementById('energyFilter').value;
+        const response = await fetch(`/api/tasks?energy=${energy}`);
+        const tasks = await response.json();
+        
+        const listElement = document.getElementById('taskList');
+        listElement.innerHTML = '';
+        
+        if(tasks.length === 0) {
+            listElement.innerHTML = '<li>Database empty! Click the green button above to fetch data.</li>';
+            return;
+        }
+
+        tasks.forEach(task => {
+            const li = document.createElement('li');
+            li.textContent = task.title;
+            listElement.appendChild(li);
+        });
+    }
+
+    async function fetchExternalTask() {
+        const statusLi = document.createElement('li');
+        statusLi.textContent = "Connecting to external endpoint...";
+        document.getElementById('taskList').prepend(statusLi);
+
+        await fetch('/api/fetch-external', { method: 'POST' });
+        fetchTasks();
+    }
+
+    fetchTasks();
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuickTask Dashboard</title>
     <style>
         body { font-family: -apple-system, sans-serif; background: #f5f5f7; padding: 40px; color: #1d1d1f; }
