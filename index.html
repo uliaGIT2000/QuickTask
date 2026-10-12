@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickTask Dashboard</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f5f5f7; padding: 40px; color: #1d1d1f; }
+        .card { background: white; max-width: 500px; margin: 0 auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1 { margin-top: 0; font-size: 24px; text-align: center; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; box-sizing: border-box; border-radius: 6px; border: 1px solid #d2d2d7; font-size: 16px; }
+        button { background: #0071e3; color: white; border: none; font-weight: bold; cursor: pointer; }
+        ul { list-style: none; padding: 0; }
+        li { background: #f5f5f7; padding: 12px; margin: 6px 0; border-radius: 6px; border-left: 4px solid #0071e3; }
+        .hint { font-size: 13px; color: #86868b; text-align: center; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>QuickTask</h1>
+    <div class="hint">Showing up to 3 tasks tailored to your energy level</div>
+
+    <label for="energyFilter">Current Energy Level:</label>
+    <select id="energyFilter" onchange="fetchTasks()">
+        <option value="high">🔥 High Energy</option>
+        <option value="low">☕ Low Energy</option>
+    </select>
+
+    <ul id="taskList"></ul>
+
+    <hr style="border: 0; border-top: 1px solid #d2d2d7; margin: 20px 0;">
+    <input type="text" id="taskTitle" placeholder="What needs to be done?">
+    <select id="taskEnergy">
+        <option value="high">Requires High Energy</option>
+        <option value="low">Requires Low Energy</option>
+    </select>
+    <button onclick="addTask()">Add Task</button>
+</div>
+
+<script>
+    // Fetch data from the Flask RESTful API
+    async function fetchTasks() {
+        const energy = document.getElementById('energyFilter').value;
+        const response = await fetch(`/api/tasks?energy=${energy}`);
+        const tasks = await response.json();
+        
+        const listElement = document.getElementById('taskList');
+        listElement.innerHTML = '';
+        
+        if(tasks.length === 0) {
+            listElement.innerHTML = '<li>🎉 No tasks! Rest or add some below.</li>';
+            return;
+        }
+
+        tasks.forEach(task => {
+            const li = document.createElement('li');
+            li.textContent = task.title;
+            listElement.appendChild(li);
+        });
+    }
+
+    // Post a new task payload string to the backend
+    async function addTask() {
+        const titleInput = document.getElementById('taskTitle');
+        const energyInput = document.getElementById('taskEnergy');
+        
+        if (!titleInput.value) return;
+
+        await fetch('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: titleInput.value, energy: energyInput.value })
+        });
+
+        titleInput.value = '';
+        fetchTasks();
+    }
+
+    fetchTasks();
+</script>
+
+</body>
+</html>
+
