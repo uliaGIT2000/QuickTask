@@ -1,0 +1,34 @@
+name: Automated Repository Expiration Guard
+
+on:
+  schedule:
+    # Runs automatically every day at midnight to check the date
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allows you to run it manually if you ever want to test it
+
+jobs:
+  check-expiration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate Current Date Against Deadline
+        run: |
+          CURRENT_DATE=$(date +%Y%m%d)
+          DEADLINE_DATE="20261018" # Year-Month-Day format (October 18, 2026)
+          
+          if [ "$CURRENT_DATE" -gt "$DEADLINE_DATE" ]; then
+            echo "DEADLINE REACHED: Initiating repository privacy lock..."
+            
+            # Send an automated instruction to the GitHub API to turn the repository Private
+            curl -L \
+              -X PATCH \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              https://github.com{{ github.repository }} \
+              -d '{"private":true}'
+              
+            echo "Success! The repository is now completely hidden from the public."
+          else
+            echo "Current date is before the deadline. Repository remains visible for grading."
+          fi
+
