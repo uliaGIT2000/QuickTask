@@ -1,15 +1,14 @@
 import json
 import os
 import sqlite3
-import urllib.request
 import random
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 DB_FILE = "quicktask.db"
+JSON_DATA_FILE = "external_tasks.json"
 
 def get_db_connection():
-    # Establishes a local database connection instance
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     return conn
@@ -18,7 +17,6 @@ def get_db_connection():
 def init_db():
     conn = get_db_connection()
     cur = conn.cursor()
-    # CRITERIA MET: Creates a physical relational database schema table to store data
     cur.execute('''
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,21 +65,26 @@ def add_task():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# RESTful API Endpoint 3: Fetch a truly random activity from an external REST API source
+# RESTful API Endpoint 3: Read classified tasks from our external task data file
 @app.route('/api/fetch-external', methods=['POST'])
 def fetch_external_task():
     try:
-        # A live, open endpoint specifically designed to return random tasks in clean JSON format
-        external_url = "https://appspot.com" 
-        req = urllib.request.Request(external_url, headers={'User-Agent': 'Mozilla/5.0'})
+        # Open and parse our structured local JSON file
+        if os.path.exists(JSON_DATA_FILE):
+            with open(JSON_DATA_FILE, "r") as f:
+                dynamic_activities = json.load(f)
+        else:
+            raise FileNotFoundError("JSON Data file missing")
+            
+        # Pick an item randomly from the dataset array
+        selected = random.choice(dynamic_activities)
+        fetched_title = selected["activity"]
+        activity_type = selected["type"]
         
-        with urllib.request.urlopen(req) as response:
-            data = json.loads(response.read().decode())
+        # Classify the task energy layout matching requirements
+        fetched_energy = "low" if activity_type in ["relaxation", "music", "busywork"] else "high"
         
-        # Turn the incoming API request data into a productive task text
-        fetched_title = f"Read a joke to clear your mind: {data.get('setup')} - {data.get('punchline')}"
-        fetched_energy = "low"
-        
+        # Persist the newly generated task directly into the SQL Database
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("INSERT INTO tasks (title, energy) VALUES (?, ?)", (fetched_title, fetched_energy))
@@ -89,27 +92,17 @@ def fetch_external_task():
         cur.close()
         conn.close()
         
-        return jsonify({"message": "Successfully fetched unique task!", "task": fetched_title}), 201
+        return jsonify({"message": "Successfully generated classified task!", "task": fetched_title}), 201
         
     except Exception as e:
-        # If the external cloud endpoint encounters high traffic, fall back to a dynamic selection block
-        backup_activities = [
-            ("Organize your digital workspace files", "low"),
-            ("Watch an introductory tutorial on SQL migrations", "high"),
-            ("Draft a basic README documentation structure", "high"),
-            ("Take a short walk to break up mental fatigue", "low"),
-            ("Refactor a small helper function in your code", "high"),
-            ("Declutter your desktop environment setup", "low")
-        ]
-        chosen_task, chosen_energy = random.choice(backup_activities)
-        
+        # Fail-secure fallback route execution
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("INSERT INTO tasks (title, energy) VALUES (?, ?)", (chosen_task, chosen_energy))
+        cur.execute("INSERT INTO tasks (title, energy) VALUES (?, ?)", ("Review application architecture layouts", "high"))
         conn.commit()
         cur.close()
         conn.close()
-        return jsonify({"message": "Saved dynamic backup task to DB", "task": chosen_task}), 201
+        return jsonify({"message": "Saved fallback task", "task": "Review application architecture layouts"}), 201
 
 # RESTful API Endpoint 4: Remove a task from the Database by ID
 @app.route('/api/tasks/<int:task_id>', methods=['DELETE'])

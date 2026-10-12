@@ -1,0 +1,14 @@
+[
+    {"activity": "Organize your digital workspace files", "type": "busywork"},
+    {"activity": "Watch an introductory tutorial on SQL migrations", "type": "education"},
+    {"activity": "Draft a basic README documentation structure", "type": "education"},
+    {"activity": "Review open-source repositories on GitHub", "type": "education"},
+    {"activity": "Refactor a small helper function in your code", "type": "education"},
+    {"activity": "Take a short walk to recharge mental clarity", "type": "relaxation"},
+    {"activity": "Listen to a technology podcast episode", "type": "relaxation"},
+    {"activity": "Declutter your desktop environment setup", "type": "busywork"},
+    {"activity": "Outline project goals for the upcoming week", "type": "education"},
+    {"activity": "Format and optimize your database indexing keys", "type": "education"},
+    {"activity": "Stretch for five minutes at your desk", "type": "relaxation"},
+    {"activity": "Clear out your unneeded email notifications", "type": "busywork"}
+]
